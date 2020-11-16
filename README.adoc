@@ -1,0 +1,60 @@
+:doctype: article
+
+= gofuncs
+
+A set of common functions that can be used on multiple projects.
+
+== Function adapters
+
+These functions use type assertion and reflection to accept an empty interface argument and return a specific function signature.
+Each adapter first tries to type assert that the argument is the exact function signature desired, and if so, returns the argument as is.
+Otherwise, the adapter uses reflection to verify the argument is the correct kind of function and adapt it.
+Adapters panic if the function argument does not match expectations. 
+
+* Filter(func) adapts a func(any) bool into a func(interface{}) bool
+* Map(func) adapts a func(any) any into a func(interface{}) interface{}
+* MapTo(func, X) adapts a func(any) X into a func(interface{}) X
+* Supplier(func) adapts a func() any into a func() interface{}
+* Consumer(func) adapts a func(any) into a func(interface{})
+
+== Examples
+
+=== Filter
+
+....
+var fn func(interface{}) bool = Filter(func(i int) bool { return i < 3 })
+fmt.Println(fn(1), fn(5))
+// true false
+....
+
+=== Map
+
+....
+var fn func(interface{}) interface{} = Map(func(i int) string { return strconv.Itoa(i) })
+fmt.Printf("%q, %q\n", fn(1), fn(5))
+// "1" "5"
+....
+
+=== MapTo
+
+....
+var fn func(interface{}) string = MapTo(func(i int) string { return strconv.Itoa(i) }, "").(func(interface{}) string)
+fmt.Printf("%q, %q\n", fn(1), fn(5))
+// "1" "5"
+....
+
+=== Supplier
+
+....
+var fn func() interface{} = Suppler(func() int { return 5 })
+fmt.Println(fn())
+// 5
+....
+
+=== Consumer
+
+....
+var fn func(interface{}) = Consumer(func(i int) { fmt.Println(i) })
+fn(5)
+// 5
+....
