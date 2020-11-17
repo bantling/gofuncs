@@ -16,7 +16,7 @@ func TestFilter(t *testing.T) {
 
 	// Inexact match
 	filterFn = Filter(func(i int) bool { return i < 3 })
-	assert.True(t, filterFn(1))
+	assert.True(t, filterFn(uint8(1)))
 	assert.False(t, filterFn(5))
 
 	deferFunc := func() {
@@ -74,7 +74,8 @@ func TestMap(t *testing.T) {
 
 	// Inexact match
 	mapFn = Map(func(i int) int { return i * 2 })
-	assert.Equal(t, 4, mapFn(2))
+	assert.Equal(t, 4, mapFn(uint8(2)))
+	assert.Equal(t, 6, mapFn(3))
 
 	deferFunc := func() {
 		assert.Equal(t, mapErrorMsg, recover())
@@ -276,6 +277,8 @@ func TestConsumer(t *testing.T) {
 
 	// Inexact match
 	consumerFn = Consumer(func(i int) { val = i })
+	consumerFn(uint8(3))
+	assert.Equal(t, 3, val)
 	consumerFn(4)
 	assert.Equal(t, 4, val)
 

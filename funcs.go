@@ -16,6 +16,7 @@ const (
 
 // Filter (fn) adapts a func(any) bool into a func(interface{}) bool.
 // If fn happens to be a func(interface{}) bool, it is returned as is.
+// Otherwise, each invocation converts the arg passed to the type the func receives.
 func Filter(fn interface{}) func(interface{}) bool {
 	// Return fn as is if it is desired type
 	if res, isa := fn.(func(interface{}) bool); isa {
@@ -34,9 +35,11 @@ func Filter(fn interface{}) func(interface{}) bool {
 		panic(filterErrorMsg)
 	}
 
+	argTyp := typ.In(0)
+
 	return func(arg interface{}) bool {
 		var (
-			argVal = reflect.ValueOf(arg)
+			argVal = reflect.ValueOf(arg).Convert(argTyp)
 			resVal = vfn.Call([]reflect.Value{argVal})[0].Bool()
 		)
 
@@ -46,6 +49,7 @@ func Filter(fn interface{}) func(interface{}) bool {
 
 // Map (fn) adapts a func(any) any into a func(interface{}) interface{}.
 // If fn happens to be a func(interface{}) interface{}, it is returned as is.
+// Otherwise, each invocation converts the arg passed to the type the func receives.
 func Map(fn interface{}) func(interface{}) interface{} {
 	// Return fn as is if it is desired type
 	if res, isa := fn.(func(interface{}) interface{}); isa {
@@ -62,9 +66,11 @@ func Map(fn interface{}) func(interface{}) interface{} {
 		panic(mapErrorMsg)
 	}
 
+	argTyp := typ.In(0)
+
 	return func(arg interface{}) interface{} {
 		var (
-			argVal = reflect.ValueOf(arg)
+			argVal = reflect.ValueOf(arg).Convert(argTyp)
 			resVal = vfn.Call([]reflect.Value{argVal})[0].Interface()
 		)
 
@@ -74,7 +80,7 @@ func Map(fn interface{}) func(interface{}) interface{} {
 
 // MapTo (fn, X) adapts a func(any) X' into a func(interface{}) X.
 // If fn happens to be a func(interface{}) X, it is returned as is.
-// Otherwise, type X' must be convertible to X.
+// Otherwise, each invocation converts the arg passed to the type the func receives, and type X' must be convertible to X.
 // The result will have to be type asserted by the caller.
 func MapTo(fn interface{}, val interface{}) interface{} {
 	// val cannot be nil
@@ -230,6 +236,7 @@ func SupplierOf(fn interface{}, val interface{}) interface{} {
 
 // Consumer (fn) adapts a func(any) into a func(interface{})
 // If fn happens to be a func(interface{}), it is returned as is.
+// Otherwise, each invocation converts the arg passed to the type the func receives.
 func Consumer(fn interface{}) func(interface{}) {
 	// Return fn as is if it is desired type
 	if res, isa := fn.(func(interface{})); isa {
@@ -249,8 +256,10 @@ func Consumer(fn interface{}) func(interface{}) {
 		panic(consumerErrorMsg)
 	}
 
+	argTyp := typ.In(0)
+
 	return func(arg interface{}) {
-		argVal := reflect.ValueOf(arg)
+		argVal := reflect.ValueOf(arg).Convert(argTyp)
 		vfn.Call([]reflect.Value{argVal})
 	}
 }
