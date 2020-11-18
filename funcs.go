@@ -120,7 +120,13 @@ func EqualTo(val interface{}) func(interface{}) bool {
 
 // IsNil is a func(interface{}) bool that returns true is val is nil
 func IsNil(val interface{}) bool {
-	return (val == nil) || (fmt.Sprintf("%p", val) == "0x0")
+	if val == nil {
+		return true
+	}
+
+	// Sometimes a nil value received as an empty interface doesn't compare to nil with ==, but the pointer address will be the string 0x0.
+	// If the value is a string, it will print in pointer format as "%!p(string=X)", where X is the string value.
+	return fmt.Sprintf("%p", val) == "0x0"
 }
 
 // Map (fn) adapts a func(any) any into a func(interface{}) interface{}.
