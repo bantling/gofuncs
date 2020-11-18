@@ -19,6 +19,52 @@ func TestFilter(t *testing.T) {
 	assert.True(t, filterFn(uint8(1)))
 	assert.False(t, filterFn(5))
 
+	// Exact and Inexact match all
+	filterFns := FilterAll(
+		func(i interface{}) bool { return i.(int) < 3 },
+		func(i int) bool { return i >= 0 },
+	)
+
+	assert.True(t, filterFns[0](1))
+	assert.False(t, filterFns[1](int8(-1)))
+
+	// Exact and Inexact match And
+	filterFn = And(
+		func(i interface{}) bool { return i.(int) < 3 },
+		func(i int) bool { return i >= 0 },
+	)
+
+	assert.True(t, filterFn(1))
+	assert.False(t, filterFn(-1))
+
+	// Exact and Inexact match Or
+	filterFn = Or(
+		func(i interface{}) bool { return i.(int) < 3 },
+		func(i int) bool { return i%2 == 0 },
+	)
+
+	assert.True(t, filterFn(1))
+	assert.False(t, filterFn(5))
+
+	// Exact and Inexact match Not
+	filterFn = Not(func(i interface{}) bool { return i.(int) < 3 })
+
+	assert.False(t, filterFn(1))
+	assert.True(t, filterFn(5))
+
+	// EqualTo
+	filterFn = EqualTo(1)
+
+	assert.True(t, filterFn(int8(1)))
+	assert.False(t, filterFn(5))
+
+	// Nil
+	filterFn = IsNil
+
+	assert.True(t, filterFn(nil))
+	assert.True(t, filterFn([]int(nil)))
+	assert.False(t, filterFn(""))
+
 	deferFunc := func() {
 		assert.Equal(t, filterErrorMsg, recover())
 	}

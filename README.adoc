@@ -12,9 +12,15 @@ Otherwise, the adapter uses reflection to verify the argument is the correct kin
 Adapters panic if the function argument does not match expectations. 
 
 * Filter(func) adapts a func(any) bool into a func(interface{}) bool
+* FilterAll adapts a vararg of func(any) bool into a []func(interface{}) bool
+* And and Or use FilterAll to create conjunction and disjunctions as a func(interface{}) bool
+* Not adapts a func(any) bool into a negation func(interface{}) bool
+* EqualTo accepts a value and returns a func(interface{}) bool that returns true if the func arg is equal to the value
+* IsNil is a func(interface{}) bool that returns true if the arg is nil 
 * Map(func) adapts a func(any) any into a func(interface{}) interface{}
-* MapTo(func, X) adapts a func(any) X into a func(interface{}) X
+* MapTo(func, X) adapts a func(any) X' into a func(interface{}) X where X' is convertible to X
 * Supplier(func) adapts a func() any into a func() interface{}
+* SupplierOf(func, X) adapts a func() X' into a func() X where X' is convertible to X.
 * Consumer(func) adapts a func(any) into a func(interface{})
 
 == Examples
@@ -24,6 +30,63 @@ Adapters panic if the function argument does not match expectations.
 ....
 var fn func(interface{}) bool = Filter(func(i int) bool { return i < 3 })
 fmt.Println(fn(1), fn(5))
+// true false
+....
+
+=== FilterAll
+
+....
+var filterFn []func(interface{}) bool = FilterAll(
+    func(i interface{}) bool { return i.(int) < 3 },
+    func(i int) bool { return i >= 0 },
+)
+fmt.Println(filterFns[0](1), filterFns[1](int8(-1)))
+// true false
+....
+
+=== And
+
+....
+var filterFn func(interface{}) bool = And(
+    func(i interface{}) bool { return i.(int) < 3 },
+    func(i int) bool { return i >= 0 },
+)
+fmt.Println(filterFn(1), filterFn(-1))
+// true false
+....
+
+=== Or
+
+....
+var filterFn func(interface{}) bool = Or(
+    func(i interface{}) bool { return i.(int) < 3 },
+    func(i int) bool { return i%2 == 0 },
+)
+fmt.Println(filterFn(1), filterFn(5))
+// true false
+....
+
+=== Not
+
+....
+var filterFn func(interface{}) bool = Not(func(i interface{}) bool { return i.(int) < 3 })
+fmt.Println(filterFn(1), filterFn(5))
+// false true
+....
+
+=== EqualTo
+
+....
+var filterFn func(interface{}) bool = EqualTo(1)
+fmt.Println(filterFn(1), filterFn(5))
+// true false
+....
+
+=== IsNil
+
+....
+var filterFn func(interface{}) bool = IsNil
+fmt.Println(filterFn(nil), filterFn(5))
 // true false
 ....
 
@@ -47,6 +110,14 @@ fmt.Printf("%q, %q\n", fn(1), fn(5))
 
 ....
 var fn func() interface{} = Suppler(func() int { return 5 })
+fmt.Println(fn())
+// 5
+....
+
+=== SupplierOf
+
+....
+var fn func() int = SupplerOf(func() int8 { return 5 }, 0).(func() int)
 fmt.Println(fn())
 // 5
 ....

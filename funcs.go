@@ -47,6 +47,82 @@ func Filter(fn interface{}) func(interface{}) bool {
 	}
 }
 
+// FilterAll (fns) adapts any number of func(any) bool into a slice of func(interface{}) bool.
+// Each func passed is separately adapted using Filter into the corresponding slice element of the result.
+// FIlterAll is the basis for composing multiple logic functions into a single logic function.
+// Note that when calling the provided set of logic functions, the argument type must be compatible with all of them.
+// The most likely failure case is mixing funcs that accept interface{} that type assert the argument with funcs that accept a specific type.
+func FilterAll(fns ...interface{}) []func(interface{}) bool {
+	// Create adapters
+	adaptedFns := make([]func(interface{}) bool, len(fns))
+	for i, fn := range fns {
+		adaptedFns[i] = Filter(fn)
+	}
+
+	return adaptedFns
+}
+
+// And (fns) any number of func(any)bool into the conjunction of all the funcs.
+// Short-circuit logic will return false on the first function that returns false.
+func And(fns ...interface{}) func(interface{}) bool {
+	adaptedFns := FilterAll(fns...)
+
+	return func(val interface{}) bool {
+		for _, fn := range adaptedFns {
+			if !fn(val) {
+				return false
+			}
+		}
+
+		return true
+	}
+}
+
+// Or (fns) any number of func(any)bool into the disjunction of all the funcs.
+// Short-circuit logic will return true on the first function that returns true.
+func Or(fns ...interface{}) func(interface{}) bool {
+	adaptedFns := FilterAll(fns...)
+
+	return func(val interface{}) bool {
+		for _, fn := range adaptedFns {
+			if fn(val) {
+				return true
+			}
+		}
+
+		return false
+	}
+}
+
+// Not (fn) adapts a func(any) bool to the negation of the func.
+func Not(fn interface{}) func(interface{}) bool {
+	adaptedFn := Filter(fn)
+
+	return func(val interface{}) bool {
+		return !adaptedFn(val)
+	}
+}
+
+// EqualTo (val) returns a func(interface{}) bool that returns true if the func arg is equal to val.
+// The arg is converted to the type of val first, then compared.
+// Panics is val is nil.
+func EqualTo(val interface{}) func(interface{}) bool {
+	if IsNil(val) {
+		panic("val cannot be nil")
+	}
+
+	typ := reflect.TypeOf(val)
+
+	return func(arg interface{}) bool {
+		return (!IsNil(arg)) && reflect.ValueOf(arg).Convert(typ).Interface() == val
+	}
+}
+
+// IsNil is a func(interface{}) bool that returns true is val is nil
+func IsNil(val interface{}) bool {
+	return (val == nil) || (fmt.Sprintf("%p", val) == "0x0")
+}
+
 // Map (fn) adapts a func(any) any into a func(interface{}) interface{}.
 // If fn happens to be a func(interface{}) interface{}, it is returned as is.
 // Otherwise, each invocation converts the arg passed to the type the func receives.
@@ -84,7 +160,7 @@ func Map(fn interface{}) func(interface{}) interface{} {
 // The result will have to be type asserted by the caller.
 func MapTo(fn interface{}, val interface{}) interface{} {
 	// val cannot be nil
-	if (val == nil) || (fmt.Sprintf("%p", val) == "0x0") {
+	if IsNil(val) {
 		panic("val cannot be nil")
 	}
 
@@ -179,7 +255,7 @@ func Supplier(fn interface{}) func() interface{} {
 // The result will have to be type asserted by the caller.
 func SupplierOf(fn interface{}, val interface{}) interface{} {
 	// val cannot be nil
-	if (val == nil) || (fmt.Sprintf("%p", val) == "0x0") {
+	if IsNil(val) {
 		panic("val cannot be nil")
 	}
 
