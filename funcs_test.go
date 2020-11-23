@@ -8,6 +8,78 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func TestIndexOf(t *testing.T) {
+	// Slice
+	// Index exists
+	assert.Equal(t, 1, IndexOf([]int{1}, 0))
+	// Index does not exist, have default
+	assert.Equal(t, 2, IndexOf([]int{1}, 1, 2))
+	// Index does not exist, no default
+	assert.Equal(t, 0, IndexOf([]int{1}, 1))
+
+	// Array
+	// Index exists
+	assert.Equal(t, 1, IndexOf([1]int{1}, 0))
+	// Index does not exist, have default
+	assert.Equal(t, 2, IndexOf([1]int{1}, 1, 2))
+	// Index does not exist, no default
+	assert.Equal(t, 0, IndexOf([1]int{1}, 1))
+
+	func() {
+		defer func() {
+			assert.Equal(t, indexOfErrorMsg, recover())
+		}()
+
+		IndexOf(nil, 0)
+		assert.Fail(t, "must panic")
+	}()
+
+	func() {
+		defer func() {
+			assert.Equal(t, indexOfErrorMsg, recover())
+		}()
+
+		IndexOf(5, 0)
+		assert.Fail(t, "must panic")
+	}()
+
+	func() {
+		defer func() {
+			assert.Equal(t, indexOfErrorMsg, recover())
+		}()
+
+		IndexOf(5, 0)
+		assert.Fail(t, "must panic")
+	}()
+}
+
+func TestValueOfKey(t *testing.T) {
+	// Key exists
+	assert.Equal(t, 1, ValueOfKey(map[string]int{"1": 1}, "1"))
+	// Key does not exist, with default
+	assert.Equal(t, 2, ValueOfKey(map[string]int{"1": 1}, "", 2))
+	// Key does not exist, no default
+	assert.Equal(t, 0, ValueOfKey(map[string]int{"1": 1}, ""))
+
+	func() {
+		defer func() {
+			assert.Equal(t, valueOfKeyErrorMsg, recover())
+		}()
+
+		ValueOfKey(nil, 0)
+		assert.Fail(t, "must panic")
+	}()
+
+	func() {
+		defer func() {
+			assert.Equal(t, valueOfKeyErrorMsg, recover())
+		}()
+
+		ValueOfKey(5, 0)
+		assert.Fail(t, "must panic")
+	}()
+}
+
 func TestFilter(t *testing.T) {
 	// Exact match
 	filterFn := Filter(func(i interface{}) bool { return i.(int) < 3 })
@@ -63,6 +135,8 @@ func TestFilter(t *testing.T) {
 
 	assert.True(t, filterFn(nil))
 	assert.True(t, filterFn([]int(nil)))
+	var f func()
+	assert.True(t, filterFn(f))
 	assert.False(t, filterFn(""))
 
 	deferFunc := func() {
@@ -215,6 +289,11 @@ func TestMapTo(t *testing.T) {
 		defer deferGen(fmt.Sprintf(mapToErrorMsg, "int"))()
 		MapTo(func(string) string { return "" }, 0)
 	}()
+}
+
+func TestConvertTo(t *testing.T) {
+	convertFn := ConvertTo(int8(0))
+	assert.Equal(t, int8(1), convertFn(1))
 }
 
 func TestSupplier(t *testing.T) {

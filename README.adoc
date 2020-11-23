@@ -11,14 +11,18 @@ Each adapter first tries to type assert that the argument is the exact function 
 Otherwise, the adapter uses reflection to verify the argument is the correct kind of function and adapt it.
 Adapters panic if the function argument does not match expectations. 
 
+* IndexOf(array or slice, index, optional default) safely looks up an index into an array or slice, returning the zero value or default value if there are not enough elements for the index
+* ValueOfKey(map, key, optional default) looks up a key in a map, returning the zero value or default given if the key does not exist
 * Filter(func) adapts a func(any) bool into a func(interface{}) bool
 * FilterAll adapts a vararg of func(any) bool into a []func(interface{}) bool
 * And and Or use FilterAll to create conjunction and disjunctions as a func(interface{}) bool
 * Not adapts a func(any) bool into a negation func(interface{}) bool
 * EqualTo accepts a value and returns a func(interface{}) bool that returns true if the func arg is equal to the value
-* IsNil is a func(interface{}) bool that returns true if the arg is nil 
+* IsNil is a func(interface{}) bool that returns true if the arg is nil
+* IsNilable is a func(interface{}) bool that returns true if the type of the value given is a nilable type 
 * Map(func) adapts a func(any) any into a func(interface{}) interface{}
 * MapTo(func, X) adapts a func(any) X' into a func(interface{}) X where X' is convertible to X
+* ConvertTo(val) returns a func(interface{}) interface{} that converts the argument to the type of the value passed
 * Supplier(func) adapts a func() any into a func() interface{}
 * SupplierOf(func, X) adapts a func() X' into a func() X where X' is convertible to X.
 * Consumer(func) adapts a func(any) into a func(interface{})

@@ -6,6 +6,8 @@ import (
 )
 
 const (
+	indexOfErrorMsg    = "slc must be a slice"
+	valueOfKeyErrorMsg = "mp must be a map"
 	filterErrorMsg     = "fn must be a non-nil function of one argument of any type that returns bool"
 	mapErrorMsg        = "fn must be a non-nil function of one argument of any type that returns one value of any type"
 	mapToErrorMsg      = "fn must be a non-nil function of one argument of any type that returns one value convertible to type %s"
@@ -13,6 +15,80 @@ const (
 	supplierOfErrorMsg = "fn must be a non-nil function of no arguments that returns one value convertible to type %s"
 	consumerErrorMsg   = "fn must be a non-nil funciton of one argument of any type and no return values"
 )
+
+// IndexOf returns the first of the following given an array or slice, index, and optional default value:
+// 1. slice[index] if the array or slice length > index
+// 2. default value if provided, converted to array or slice element type
+// 3. zero value of array or slice element type
+// Panics if arrslc is not an array or slice.
+// Panics if the default value is not convertible to the array or slice element type, even if it is not needed.
+func IndexOf(arrslc interface{}, index uint, defalt ...interface{}) interface{} {
+	rv := reflect.ValueOf(arrslc)
+	switch rv.Kind() {
+	case reflect.Array:
+	case reflect.Slice:
+	default:
+		panic(indexOfErrorMsg)
+	}
+
+	elementTyp := rv.Type().Elem()
+
+	// Always ensure if default is provided that it is convertible to slice element type
+	var rdf reflect.Value
+	if len(defalt) > 0 {
+		rdf = reflect.ValueOf(defalt[0]).Convert(elementTyp)
+	}
+
+	// Return index if it exists
+	idx := int(index)
+	if rv.Len() > idx {
+		return rv.Index(idx).Interface()
+	}
+
+	// Else return default if provided
+	if rdf.IsValid() {
+		return rdf.Interface()
+	}
+
+	// Else return zero value of array or slice element type
+	return reflect.Zero(elementTyp).Interface()
+}
+
+// ValueOfKey returns the first of the following:
+// 1. map[key] if the key exists in the map
+// 2. default if provided
+// 3. zero value of map value type
+// Panics if mp is not a map.
+// Panics if the default value is not convertible to map value type, even if it is not needed.
+func ValueOfKey(mp interface{}, key interface{}, defalt ...interface{}) interface{} {
+	rv := reflect.ValueOf(mp)
+	if rv.Kind() != reflect.Map {
+		panic(valueOfKeyErrorMsg)
+	}
+
+	elementTyp := rv.Type().Elem()
+
+	// Always ensure if default is provided that it is convertible to map value type
+	var rdf reflect.Value
+	if len(defalt) > 0 {
+		rdf = reflect.ValueOf(defalt[0]).Convert(elementTyp)
+	}
+
+	// Return key value if it exists
+	for mr := rv.MapRange(); mr.Next(); {
+		if mr.Key().Interface() == key {
+			return mr.Value().Interface()
+		}
+	}
+
+	// Else return default if provided
+	if rdf.IsValid() {
+		return rdf.Interface()
+	}
+
+	// Else return zero value of map value type
+	return reflect.Zero(elementTyp).Interface()
+}
 
 // Filter (fn) adapts a func(any) bool into a func(interface{}) bool.
 // If fn happens to be a func(interface{}) bool, it is returned as is.
@@ -118,15 +194,26 @@ func EqualTo(val interface{}) func(interface{}) bool {
 	}
 }
 
-// IsNil is a func(interface{}) bool that returns true is val is nil
+// IsNil is a func(interface{}) bool that returns true if val is nil
 func IsNil(val interface{}) bool {
-	if val == nil {
+	if IsNilable(val) {
+		rv := reflect.ValueOf(val)
+		return (!rv.IsValid()) || rv.IsNil()
+	}
+
+	return false
+}
+
+// IsNilable is a func(interface{}) bool that returns true if val is nil or the type of val is a nilable type.
+// Returns true of the reflect.Kind of val is Chan, Func, Interface, Map, Ptr, or Slice.
+func IsNilable(val interface{}) bool {
+	rv := reflect.ValueOf(val)
+	if !rv.IsValid() {
 		return true
 	}
 
-	// Sometimes a nil value received as an empty interface doesn't compare to nil with ==, but the pointer address will be the string 0x0.
-	// If the value is a string, it will print in pointer format as "%!p(string=X)", where X is the string value.
-	return fmt.Sprintf("%p", val) == "0x0"
+	k := rv.Type().Kind()
+	return (k >= reflect.Chan) && (k <= reflect.Slice)
 }
 
 // Map (fn) adapts a func(any) any into a func(interface{}) interface{}.
@@ -225,6 +312,16 @@ func MapTo(fn interface{}, val interface{}) interface{} {
 			return []reflect.Value{resVal}
 		},
 	).Interface()
+}
+
+// ConvertTo generates a func(interface{}) interface{} that converts a value into the same type as the value passed.
+// Eg, ConvertTo(int8(0)) converts a func that converts a value into an int8.
+func ConvertTo(out interface{}) func(interface{}) interface{} {
+	outTyp := reflect.TypeOf(out)
+
+	return func(in interface{}) interface{} {
+		return reflect.ValueOf(in).Convert(outTyp).Interface()
+	}
 }
 
 // Supplier (fn) adapts a func() any into a func() interface{}.
