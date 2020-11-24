@@ -17,7 +17,8 @@ Adapters panic if the function argument does not match expectations.
 * FilterAll adapts a vararg of func(any) bool into a []func(interface{}) bool
 * And and Or use FilterAll to create conjunction and disjunctions as a func(interface{}) bool
 * Not adapts a func(any) bool into a negation func(interface{}) bool
-* EqualTo accepts a value and returns a func(interface{}) bool that returns true if the func arg is equal to the value
+* EqualTo accepts a value and returns a func(interface{}) bool that returns true if the func arg is equal to the value using ==
+* DeepEqualTo accepts a value and returns a func(interface{}) bool that returns true if the func arg is equal to the value using reflect.DeepEqual
 * IsNil is a func(interface{}) bool that returns true if the arg is nil
 * IsNilable is a func(interface{}) bool that returns true if the type of the value given is a nilable type 
 * Map(func) adapts a func(any) any into a func(interface{}) interface{}

@@ -124,11 +124,47 @@ func TestFilter(t *testing.T) {
 	assert.False(t, filterFn(1))
 	assert.True(t, filterFn(5))
 
-	// EqualTo
+	// EqualTo/DeepEqualTo
+	filterFn = EqualTo(nil)
+	filterFn2 := DeepEqualTo(nil)
+
+	assert.True(t, filterFn(nil))
+	assert.True(t, filterFn2(nil))
+	assert.False(t, filterFn(0))
+	assert.False(t, filterFn2(0))
+
+	filterFn = EqualTo(([]int)(nil))
+	filterFn2 = DeepEqualTo(([]int)(nil))
+
+	assert.True(t, filterFn(([]int)(nil)))
+	assert.True(t, filterFn2(([]int)(nil)))
+	assert.False(t, filterFn(nil))
+	assert.False(t, filterFn2(nil))
+	assert.False(t, filterFn(([]string)(nil)))
+	assert.False(t, filterFn2(([]string)(nil)))
+
+	theVal := []int{1, 2}
+	filterFn = EqualTo(theVal)
+	filterFn2 = DeepEqualTo([]int{1, 2})
+
+	assert.False(t, filterFn(([]int)(nil)))
+	assert.False(t, filterFn2(([]int)(nil)))
+	assert.False(t, filterFn(nil))
+	assert.False(t, filterFn2(nil))
+	assert.False(t, filterFn([]int{1}))
+	assert.False(t, filterFn2([]int{1}))
+	assert.False(t, filterFn([]int{1, 2}))
+	assert.True(t, filterFn2([]int{1, 2}))
+	assert.True(t, filterFn(theVal))
+	assert.True(t, filterFn2(theVal))
+
 	filterFn = EqualTo(1)
+	filterFn2 = DeepEqualTo(1)
 
 	assert.True(t, filterFn(int8(1)))
+	assert.True(t, filterFn2(int8(1)))
 	assert.False(t, filterFn(5))
+	assert.False(t, filterFn2(5))
 
 	// Nil
 	filterFn = IsNil

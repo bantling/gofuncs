@@ -181,16 +181,75 @@ func Not(fn interface{}) func(interface{}) bool {
 
 // EqualTo (val) returns a func(interface{}) bool that returns true if the func arg is equal to val.
 // The arg is converted to the type of val first, then compared.
-// Panics is val is nil.
+// If val is nil, then the arg type must be convertible to the type of val.
+// If val is an untyped nil, then the arg must be an untyped nil.
+// Comparison is made using == operator.
+// If val is not comparable using == (eg, slices are not comparable), the result will be true if val and arg have the same address.
 func EqualTo(val interface{}) func(interface{}) bool {
-	if IsNil(val) {
-		panic("val cannot be nil")
-	}
-
-	typ := reflect.TypeOf(val)
+	var (
+		valIsNil = IsNil(val)
+		valTyp   = reflect.TypeOf(val)
+	)
 
 	return func(arg interface{}) bool {
-		return (!IsNil(arg)) && reflect.ValueOf(arg).Convert(typ).Interface() == val
+		argTyp := reflect.TypeOf(arg)
+
+		if valTyp == nil {
+			// val is an untyped nil
+			return argTyp == nil
+		}
+
+		// Remaining comparisons require arg to be convertible to val type
+		if (argTyp == nil) || (!argTyp.ConvertibleTo(valTyp)) {
+			return false
+		}
+
+		if valIsNil {
+			// val is a typed nil, and arg is a convertible type
+			return IsNil(arg)
+		}
+
+		if !valTyp.Comparable() {
+			// val cannot be compared using ==
+			return fmt.Sprintf("%p", val) == fmt.Sprintf("%p", arg)
+		}
+
+		// val is non-nil, and arg is a possibly nil value of a convertible type
+		return (!IsNil(arg)) && (val == reflect.ValueOf(arg).Convert(valTyp).Interface())
+	}
+}
+
+// DeepEqualTo (val) returns a func(interface{}) bool that returns true if the func arg is deep equal to val.
+// The arg is converted to the type of val first, then compared.
+// If val is nil, then the arg type must be convertible to the type of val.
+// If val is an untyped nil, then the arg must be an untyped nil.
+// Comparison is made using reflect.DeepEqual.
+func DeepEqualTo(val interface{}) func(interface{}) bool {
+	var (
+		valIsNil = IsNil(val)
+		valTyp   = reflect.TypeOf(val)
+	)
+
+	return func(arg interface{}) bool {
+		argTyp := reflect.TypeOf(arg)
+
+		if valTyp == nil {
+			// val is an untyped nil
+			return argTyp == nil
+		}
+
+		// Remaining comparisons require arg to be convertible to val type
+		if (argTyp == nil) || (!argTyp.ConvertibleTo(valTyp)) {
+			return false
+		}
+
+		if valIsNil {
+			// val is a typed nil, and arg is a convertible type
+			return IsNil(arg)
+		}
+
+		// val is non-nil, and arg is a possibly nil value of a convertible type
+		return (!IsNil(arg)) && reflect.DeepEqual(val, reflect.ValueOf(arg).Convert(valTyp).Interface())
 	}
 }
 
