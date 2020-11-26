@@ -11,8 +11,8 @@ const (
 	filterErrorMsg     = "fn must be a non-nil function of one argument of any type that returns bool"
 	mapErrorMsg        = "fn must be a non-nil function of one argument of any type that returns one value of any type"
 	mapToErrorMsg      = "fn must be a non-nil function of one argument of any type that returns one value convertible to type %s"
-	supplierErrorMsg   = "fn must be a non-nil function of no arguments that returns one value of any type"
-	supplierOfErrorMsg = "fn must be a non-nil function of no arguments that returns one value convertible to type %s"
+	supplierErrorMsg   = "fn must be a non-nil function of no arguments or a single variadic argument that returns one value of any type"
+	supplierOfErrorMsg = "fn must be a non-nil function of no arguments or a single variadic argument that returns one value convertible to type %s"
 	consumerErrorMsg   = "fn must be a non-nil funciton of one argument of any type and no return values"
 )
 
@@ -385,6 +385,7 @@ func ConvertTo(out interface{}) func(interface{}) interface{} {
 
 // Supplier (fn) adapts a func() any into a func() interface{}.
 // If fn happens to be a func() interface{}, it is returned as is.
+// fn may have a single variadic argument.
 func Supplier(fn interface{}) func() interface{} {
 	// Return fn as is if it is desired type
 	if res, isa := fn.(func() interface{}); isa {
@@ -398,9 +399,10 @@ func Supplier(fn interface{}) func() interface{} {
 		panic(supplierErrorMsg)
 	}
 
-	// The func has to accept no args and return 1 type
+	// The func has to accept no args or a single variadic arg and return 1 type
 	typ := vfn.Type()
-	if (typ.NumIn() != 0) || (typ.NumOut() != 1) {
+	if !(((typ.NumIn() == 0) || ((typ.NumIn() == 1) && (typ.IsVariadic()))) &&
+		(typ.NumOut() == 1)) {
 		panic(supplierErrorMsg)
 	}
 
@@ -415,6 +417,7 @@ func Supplier(fn interface{}) func() interface{} {
 // If fn happens to be a func() X, it is returned as is.
 // Otherwise, type X' must be convertible to X.
 // The result will have to be type asserted by the caller.
+// fn may have a single variadic argument.
 func SupplierOf(fn interface{}, val interface{}) interface{} {
 	// val cannot be nil
 	if IsNil(val) {
@@ -440,9 +443,10 @@ func SupplierOf(fn interface{}, val interface{}) interface{} {
 		panic(errMsg)
 	}
 
-	// The func has to accept no args and return 1 type
+	// The func has to accept no args or a single variadic arg and return 1 type
 	typ := vfn.Type()
-	if (typ.NumIn() != 0) || (typ.NumOut() != 1) {
+	if !(((typ.NumIn() == 0) || ((typ.NumIn() == 1) && (typ.IsVariadic()))) &&
+		(typ.NumOut() == 1)) {
 		panic(errMsg)
 	}
 

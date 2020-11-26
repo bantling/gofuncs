@@ -185,6 +185,7 @@ func TestFilter(t *testing.T) {
 
 		// Not a func
 		Filter(0)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -192,6 +193,7 @@ func TestFilter(t *testing.T) {
 
 		// Nil
 		Filter(nil)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -200,6 +202,7 @@ func TestFilter(t *testing.T) {
 		// Nil func
 		var fn func()
 		Filter(fn)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -207,6 +210,7 @@ func TestFilter(t *testing.T) {
 
 		// No arg
 		Filter(func() {})
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -214,6 +218,7 @@ func TestFilter(t *testing.T) {
 
 		// No result
 		Filter(func(int) {})
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -221,6 +226,7 @@ func TestFilter(t *testing.T) {
 
 		// Wrong result type
 		Filter(func(int) int { return 0 })
+		assert.Fail(t, "must panic")
 	}()
 }
 
@@ -243,6 +249,7 @@ func TestMap(t *testing.T) {
 
 		// Not a func
 		Map(0)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -250,6 +257,7 @@ func TestMap(t *testing.T) {
 
 		// Nil
 		Map(nil)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -258,6 +266,7 @@ func TestMap(t *testing.T) {
 		// Nil func
 		var fn func(int) int
 		Map(fn)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -265,6 +274,7 @@ func TestMap(t *testing.T) {
 
 		// No args
 		Map(func() {})
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -272,6 +282,7 @@ func TestMap(t *testing.T) {
 
 		// No result
 		Map(func(int) {})
+		assert.Fail(t, "must panic")
 	}()
 }
 
@@ -301,30 +312,35 @@ func TestMapTo(t *testing.T) {
 	func() {
 		defer deferGen("val cannot be nil")()
 		MapTo(nil, nil)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
 		defer deferGen("val cannot be nil")()
 		var p *int
 		MapTo(p, p)
+		assert.Fail(t, "must panic")
 	}()
 
 	// Not a function
 	func() {
 		defer deferGen(fmt.Sprintf(mapToErrorMsg, "int"))()
 		MapTo("", 0)
+		assert.Fail(t, "must panic")
 	}()
 
 	// Wrong signature
 	func() {
 		defer deferGen(fmt.Sprintf(mapToErrorMsg, "int"))()
 		MapTo(func() {}, 0)
+		assert.Fail(t, "must panic")
 	}()
 
 	// Returns uncovertible type
 	func() {
 		defer deferGen(fmt.Sprintf(mapToErrorMsg, "int"))()
 		MapTo(func(string) string { return "" }, 0)
+		assert.Fail(t, "must panic")
 	}()
 }
 
@@ -342,6 +358,10 @@ func TestSupplier(t *testing.T) {
 	supplierFn = Supplier(func() int { return 4 })
 	assert.Equal(t, 4, supplierFn())
 
+	// Variadic match
+	supplierFn = Supplier(func(...int) int { return 6 })
+	assert.Equal(t, 6, supplierFn())
+
 	deferFunc := func() {
 		assert.Equal(t, supplierErrorMsg, recover())
 	}
@@ -351,6 +371,7 @@ func TestSupplier(t *testing.T) {
 
 		// Not a func
 		Supplier(0)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -358,6 +379,7 @@ func TestSupplier(t *testing.T) {
 
 		// Nil
 		Supplier(nil)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -366,6 +388,7 @@ func TestSupplier(t *testing.T) {
 		// Nil func
 		var fn func() int
 		Supplier(fn)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -373,6 +396,15 @@ func TestSupplier(t *testing.T) {
 
 		// Has args
 		Supplier(func(int) {})
+		assert.Fail(t, "must panic")
+	}()
+
+	func() {
+		defer deferFunc()
+
+		// variadic but not only arg
+		Supplier(func(int, ...int) int { return 0 })
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -380,6 +412,7 @@ func TestSupplier(t *testing.T) {
 
 		// No result
 		Supplier(func() {})
+		assert.Fail(t, "must panic")
 	}()
 }
 
@@ -392,6 +425,10 @@ func TestSupplierOf(t *testing.T) {
 	supplierFn = SupplierOf(func() int8 { return 4 }, 0).(func() int)
 	assert.Equal(t, 4, supplierFn())
 
+	// Variadic match
+	supplierFn = SupplierOf(func(...int) int8 { return 6 }, 0).(func() int)
+	assert.Equal(t, 6, supplierFn())
+
 	deferGen := func(errMsg string) func() {
 		return func() {
 			assert.Equal(t, errMsg, recover())
@@ -401,30 +438,43 @@ func TestSupplierOf(t *testing.T) {
 	func() {
 		defer deferGen("val cannot be nil")()
 		SupplierOf(nil, nil)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
 		defer deferGen("val cannot be nil")()
 		var p *int
 		SupplierOf(p, p)
+		assert.Fail(t, "must panic")
 	}()
 
 	// Not a function
 	func() {
 		defer deferGen(fmt.Sprintf(supplierOfErrorMsg, "int"))()
 		SupplierOf("", 0)
+		assert.Fail(t, "must panic")
 	}()
 
 	// Wrong signature
 	func() {
 		defer deferGen(fmt.Sprintf(supplierOfErrorMsg, "int"))()
 		SupplierOf(func() {}, 0)
+		assert.Fail(t, "must panic")
+	}()
+
+	func() {
+		defer deferGen(fmt.Sprintf(supplierOfErrorMsg, "int"))()
+
+		// variadic but not only arg
+		SupplierOf(func(int, ...int) int { return 0 }, 0)
+		assert.Fail(t, "must panic")
 	}()
 
 	// Returns uncovertible type
 	func() {
 		defer deferGen(fmt.Sprintf(supplierOfErrorMsg, "int"))()
 		SupplierOf(func() string { return "" }, 0)
+		assert.Fail(t, "must panic")
 	}()
 }
 
@@ -453,6 +503,7 @@ func TestConsumer(t *testing.T) {
 
 		// Not a func
 		Consumer(0)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -460,6 +511,7 @@ func TestConsumer(t *testing.T) {
 
 		// Nil
 		Consumer(nil)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -468,6 +520,7 @@ func TestConsumer(t *testing.T) {
 		// Nil func
 		var fn func()
 		Consumer(fn)
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -475,6 +528,7 @@ func TestConsumer(t *testing.T) {
 
 		// No arg
 		Consumer(func() {})
+		assert.Fail(t, "must panic")
 	}()
 
 	func() {
@@ -482,6 +536,7 @@ func TestConsumer(t *testing.T) {
 
 		// Has result
 		Consumer(func() int { return 0 })
+		assert.Fail(t, "must panic")
 	}()
 }
 

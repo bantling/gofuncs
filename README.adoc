@@ -120,6 +120,10 @@ fmt.Printf("%q, %q\n", fn(1), fn(5))
 var fn func() interface{} = Suppler(func() int { return 5 })
 fmt.Println(fn())
 // 5
+
+var fn func() interface{} = Suppler(func(...int) int { return 6 })
+fmt.Println(fn())
+// 6
 ....
 
 === SupplierOf
@@ -128,6 +132,10 @@ fmt.Println(fn())
 var fn func() int = SupplerOf(func() int8 { return 5 }, 0).(func() int)
 fmt.Println(fn())
 // 5
+
+var fn func() int = SupplerOf(func(...int8) int8 { return 6 }, 0).(func() int)
+fmt.Println(fn())
+// 6
 ....
 
 === Consumer
