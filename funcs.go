@@ -501,3 +501,28 @@ func Consumer(fn interface{}) func(interface{}) {
 		vfn.Call([]reflect.Value{argVal})
 	}
 }
+
+// Ternary returns trueVal if expr is true, else it returns falseVal
+func Ternary(expr bool, trueVal, falseVal interface{}) interface{} {
+	if expr {
+		return trueVal
+	}
+
+	return falseVal
+}
+
+// PanicOnError panics if err is non-nil
+func PanicOnError(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
+// PanicOnError2 panics if err is non-nil, otherwise returns value
+func PanicOnError2(val interface{}, err error) interface{} {
+	if err != nil {
+		panic(err)
+	}
+
+	return val
+}

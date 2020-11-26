@@ -27,6 +27,9 @@ Adapters panic if the function argument does not match expectations.
 * Supplier(func) adapts a func() any into a func() interface{}
 * SupplierOf(func, X) adapts a func() X' into a func() X where X' is convertible to X.
 * Consumer(func) adapts a func(any) into a func(interface{})
+* Ternary(bool, trueVal, falseVal) returns trueVal is the bool is true, else falseVal
+* PanicOnError(error) panics if the error is non-nil
+* PanicOnError2(val, error) panic if the error is non-nil, else returns val
 
 == Examples
 
@@ -133,4 +136,32 @@ fmt.Println(fn())
 var fn func(interface{}) = Consumer(func(i int) { fmt.Println(i) })
 fn(5)
 // 5
+....
+
+=== Ternary
+
+....
+str := "abc"
+i := Ternary(str == "abc", 1, 2)
+// i = 1
+
+i = Ternary(str == "def", 1, 2)
+// i = 2
+....
+
+=== PanicOnError
+
+....
+var str string
+PanicOnError(json.Unmarshal([]byte(`"abc"`), &str))
+// str = abc
+
+PanicOnError(json.Unmarshal([]byte("{"), &str))
+// panics with error containing: unexpected end of JSON input
+
+i := PanicOnError2(strconv.Atoi("1")).(int)
+// i = 1
+
+PanicOnError2(strconv.Atoi("a"))
+// panics with error containing: strconv.Atoi: parsing "a": invalid syntax
 ....

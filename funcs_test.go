@@ -1,6 +1,7 @@
 package gofuncs
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"testing"
@@ -481,5 +482,37 @@ func TestConsumer(t *testing.T) {
 
 		// Has result
 		Consumer(func() int { return 0 })
+	}()
+}
+
+func TestTernary(t *testing.T) {
+	assert.Equal(t, 1, Ternary(true, 1, 2))
+	assert.Equal(t, 2, Ternary(false, 1, 2))
+}
+
+func TestPanicOnError(t *testing.T) {
+	var str string
+	PanicOnError(json.Unmarshal([]byte(`"abc"`), &str))
+	assert.Equal(t, "abc", str)
+
+	func() {
+		defer func() {
+			assert.Equal(t, "unexpected end of JSON input", recover().(error).Error())
+		}()
+
+		PanicOnError(json.Unmarshal([]byte("{"), &str))
+		assert.Fail(t, "json.Unmarshal must fail")
+	}()
+
+	i := PanicOnError2(strconv.Atoi("1")).(int)
+	assert.Equal(t, 1, i)
+
+	func() {
+		defer func() {
+			assert.Equal(t, `strconv.Atoi: parsing "a": invalid syntax`, recover().(error).Error())
+		}()
+
+		PanicOnError2(strconv.Atoi("a"))
+		assert.Fail(t, "strconv must fail")
 	}()
 }
