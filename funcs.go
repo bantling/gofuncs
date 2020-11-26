@@ -511,6 +511,16 @@ func Ternary(expr bool, trueVal, falseVal interface{}) interface{} {
 	return falseVal
 }
 
+// TernaryOf returns trueVal() if expr is true, else it returns falseVal()
+// trueVal and falseVal must be func() any.
+func TernaryOf(expr bool, trueVal, falseVal interface{}) interface{} {
+	if expr {
+		return Supplier(trueVal)()
+	}
+
+	return Supplier(falseVal)()
+}
+
 // PanicOnError panics if err is non-nil
 func PanicOnError(err error) {
 	if err != nil {

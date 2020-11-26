@@ -488,6 +488,9 @@ func TestConsumer(t *testing.T) {
 func TestTernary(t *testing.T) {
 	assert.Equal(t, 1, Ternary(true, 1, 2))
 	assert.Equal(t, 2, Ternary(false, 1, 2))
+
+	assert.Equal(t, 1, TernaryOf(true, func() interface{} { return 1 }, func() interface{} { return 2 }))
+	assert.Equal(t, 2, TernaryOf(false, func() int { return 1 }, func() int { return 2 }))
 }
 
 func TestPanicOnError(t *testing.T) {
