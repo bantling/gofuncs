@@ -3,6 +3,7 @@ package gofuncs
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"strconv"
 	"testing"
 
@@ -167,12 +168,54 @@ func TestFilter(t *testing.T) {
 	assert.False(t, filterFn(5))
 	assert.False(t, filterFn2(5))
 
+	// LessThan
+	filterFn = LessThan(5)
+	assert.True(t, filterFn(int8(3)))
+	assert.False(t, filterFn(5))
+
+	// LessThanEquals
+	filterFn = LessThanEquals(5)
+	assert.True(t, filterFn(int8(5)))
+	assert.False(t, filterFn(6))
+
+	// GreaterThan
+	filterFn = GreaterThan(5)
+	assert.True(t, filterFn(int8(6)))
+	assert.False(t, filterFn(5))
+
+	// GreaterThanEquals
+	filterFn = GreaterThanEquals(5)
+	assert.True(t, filterFn(int8(5)))
+	assert.False(t, filterFn(4))
+
+	// IsNegative
+	filterFn = IsNegative
+	assert.True(t, filterFn(int8(-1)))
+	assert.False(t, filterFn(0))
+
+	// IsNonNegative
+	filterFn = IsNonNegative
+	assert.True(t, filterFn(int8(0)))
+	assert.False(t, filterFn(-1))
+
+	// IsPositive
+	filterFn = IsPositive
+	assert.True(t, filterFn(int8(1)))
+	assert.False(t, filterFn(0))
+
 	// Nil
 	filterFn = IsNil
 
 	assert.True(t, filterFn(nil))
 	assert.True(t, filterFn([]int(nil)))
 	var f func()
+	assert.True(t, filterFn(f))
+	assert.False(t, filterFn(""))
+
+	// IsNilable
+	filterFn = IsNilable
+	assert.True(t, filterFn(nil))
+	assert.True(t, filterFn([]int(nil)))
 	assert.True(t, filterFn(f))
 	assert.False(t, filterFn(""))
 
@@ -548,29 +591,54 @@ func TestTernary(t *testing.T) {
 	assert.Equal(t, 2, TernaryOf(false, func() int { return 1 }, func() int { return 2 }))
 }
 
-func TestPanicOnError(t *testing.T) {
+func TestPanic(t *testing.T) {
 	var str string
-	PanicOnError(json.Unmarshal([]byte(`"abc"`), &str))
+	PanicE(json.Unmarshal([]byte(`"abc"`), &str))
 	assert.Equal(t, "abc", str)
 
 	func() {
 		defer func() {
-			assert.Equal(t, "unexpected end of JSON input", recover().(error).Error())
+			assert.Equal(t, "unexpected end of JSON input", recover())
 		}()
 
-		PanicOnError(json.Unmarshal([]byte("{"), &str))
+		PanicE(json.Unmarshal([]byte("{"), &str))
 		assert.Fail(t, "json.Unmarshal must fail")
 	}()
 
-	i := PanicOnError2(strconv.Atoi("1")).(int)
+	i := PanicVE(strconv.Atoi("1")).(int)
 	assert.Equal(t, 1, i)
 
 	func() {
 		defer func() {
-			assert.Equal(t, `strconv.Atoi: parsing "a": invalid syntax`, recover().(error).Error())
+			assert.Equal(t, `strconv.Atoi: parsing "a": invalid syntax`, recover())
 		}()
 
-		PanicOnError2(strconv.Atoi("a"))
+		PanicVE(strconv.Atoi("a"))
 		assert.Fail(t, "strconv must fail")
+	}()
+
+	PanicBM(big.NewRat(2, 1).IsInt(), "must be int")
+
+	func() {
+		defer func() {
+			assert.Equal(t, "must be int", recover())
+		}()
+
+		PanicBM(big.NewRat(2, 3).IsInt(), "must be int")
+		assert.Fail(t, "IsInt must fail")
+	}()
+
+	f, ok := big.NewFloat(1.0).SetString("2")
+	PanicVBM(f, ok, "must be float64")
+	assert.Equal(t, "2", f.String())
+
+	func() {
+		defer func() {
+			assert.Equal(t, "must be float64", recover())
+		}()
+
+		f, ok = big.NewFloat(1.0).SetString("a")
+		PanicVBM(f, ok, "must be float64")
+		assert.Fail(t, "Float64 must fail")
 	}()
 }

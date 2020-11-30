@@ -19,6 +19,14 @@ Adapters panic if the function argument does not match expectations.
 * Not adapts a func(any) bool into a negation func(interface{}) bool
 * EqualTo accepts a value and returns a func(interface{}) bool that returns true if the func arg is equal to the value using ==
 * DeepEqualTo accepts a value and returns a func(interface{}) bool that returns true if the func arg is equal to the value using reflect.DeepEqual
+* IsLessableKind returns true if the given reflect.Kind is any type that compared using the < operator
+* LessThan accepts a value and returns a func(interface{}) bool that returns true if the func arg < the value
+* LessThanEquals accepts a value and returns a func(interface{}) bool that returns true if the func arg <= the value
+* GreaterThan accepts a value and returns a func(interface{}) bool that returns true if the func arg > the value
+* GreaterThanEquals accepts a value and returns a func(interface{}) bool that returns true if the func arg >= the value
+* IsNegative accepts a value and returns true if it is negative
+* IsNonNegative accepts a value and returns true if it is non-negative
+* IsPositive accepts a value and returns true if it is positive
 * IsNil is a func(interface{}) bool that returns true if the arg is nil
 * IsNilable is a func(interface{}) bool that returns true if the type of the value given is a nilable type 
 * Map(func) adapts a func(any) any into a func(interface{}) interface{}
@@ -28,8 +36,10 @@ Adapters panic if the function argument does not match expectations.
 * SupplierOf(func, X) adapts a func() X' into a func() X where X' is convertible to X.
 * Consumer(func) adapts a func(any) into a func(interface{})
 * Ternary(bool, trueVal, falseVal) returns trueVal is the bool is true, else falseVal
-* PanicOnError(error) panics if the error is non-nil
-* PanicOnError2(val, error) panic if the error is non-nil, else returns val
+* PanicE(error) panics if the error is non-nil with the wrapped message
+* PanicVE(val, error) panics if the error is non-nil with the wrapped message, else returns val
+* PanicBM(bool, msg) panics if the bool is false with msg
+* PanicVBM(val, bool, msg) panics if the bool is false with msg, else returns val
 
 == Examples
 
@@ -157,19 +167,33 @@ i = Ternary(str == "def", 1, 2)
 // i = 2
 ....
 
-=== PanicOnError
+=== Panic
 
 ....
 var str string
-PanicOnError(json.Unmarshal([]byte(`"abc"`), &str))
+PanicE(json.Unmarshal([]byte(`"abc"`), &str))
 // str = abc
 
-PanicOnError(json.Unmarshal([]byte("{"), &str))
-// panics with error containing: unexpected end of JSON input
+PanicE(json.Unmarshal([]byte("{"), &str))
+// panics with `unexpected end of JSON input`
 
-i := PanicOnError2(strconv.Atoi("1")).(int)
+i := PanicVE(strconv.Atoi("1")).(int)
 // i = 1
 
-PanicOnError2(strconv.Atoi("a"))
-// panics with error containing: strconv.Atoi: parsing "a": invalid syntax
+PanicVE(strconv.Atoi("a"))
+// panics with `strconv.Atoi: parsing "a": invalid syntax`
+
+PanicBM(big.NewRat(2, 1).IsInt(), "must be int")
+// no panic
+
+PanicBM(big.NewRat(2, 3).IsInt(), "must be int")
+// panics with `must be an int`
+
+f, ok := big.NewFloat(1.0).SetString("2")
+PanicVBM(f, ok, "must be float64")
+// f = *Float(2)
+
+f, ok = big.NewFloat(1.0).SetString("a")
+PanicVBM(f, ok, "must be float64")
+// panics with `must be float64`
 ....

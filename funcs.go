@@ -9,6 +9,7 @@ const (
 	indexOfErrorMsg    = "slc must be a slice"
 	valueOfKeyErrorMsg = "mp must be a map"
 	filterErrorMsg     = "fn must be a non-nil function of one argument of any type that returns bool"
+	lessThanErrorMsg   = "val must be a lessable type"
 	mapErrorMsg        = "fn must be a non-nil function of one argument of any type that returns one value of any type"
 	mapToErrorMsg      = "fn must be a non-nil function of one argument of any type that returns one value convertible to type %s"
 	supplierErrorMsg   = "fn must be a non-nil function of no arguments or a single variadic argument that returns one value of any type"
@@ -251,6 +252,167 @@ func DeepEqualTo(val interface{}) func(interface{}) bool {
 		// val is non-nil, and arg is a possibly nil value of a convertible type
 		return (!IsNil(arg)) && reflect.DeepEqual(val, reflect.ValueOf(arg).Convert(valTyp).Interface())
 	}
+}
+
+// IsLessableKind returns if if kind represents any numeric type or string
+func IsLessableKind(kind reflect.Kind) bool {
+	return ((kind >= reflect.Int) && (kind <= reflect.Float64) ||
+		(kind == reflect.String))
+}
+
+// LessThan (val) returns a func(interface{}) bool that returns true if the func arg < val.
+// The arg is converted to the type of val first, then compared.
+// Panics if val is nil or IsLessableKind(kind of val) is false.
+func LessThan(val interface{}) func(interface{}) bool {
+	if IsNil(val) {
+		panic(lessThanErrorMsg)
+	}
+
+	rv := reflect.ValueOf(val)
+	if !IsLessableKind(rv.Kind()) {
+		panic(lessThanErrorMsg)
+	}
+
+	switch rv.Kind() {
+	case reflect.Int:
+		fallthrough
+	case reflect.Int8:
+		fallthrough
+	case reflect.Int16:
+		fallthrough
+	case reflect.Int32:
+		fallthrough
+	case reflect.Int64:
+		typ := reflect.TypeOf(int64(0))
+		compare := rv.Convert(typ).Int()
+		return func(arg interface{}) bool {
+			return reflect.ValueOf(arg).Convert(typ).Int() < compare
+		}
+
+	case reflect.Uint:
+		fallthrough
+	case reflect.Uint8:
+		fallthrough
+	case reflect.Uint16:
+		fallthrough
+	case reflect.Uint32:
+		fallthrough
+	case reflect.Uint64:
+		typ := reflect.TypeOf(uint64(0))
+		compare := rv.Convert(typ).Uint()
+		return func(arg interface{}) bool {
+			return reflect.ValueOf(arg).Convert(typ).Uint() < compare
+		}
+
+	case reflect.Float32:
+		fallthrough
+	case reflect.Float64:
+		typ := reflect.TypeOf(float64(0.0))
+		compare := rv.Convert(typ).Float()
+		return func(arg interface{}) bool {
+			return reflect.ValueOf(arg).Convert(typ).Float() < compare
+		}
+
+	// Must be string
+	default:
+		typ := reflect.TypeOf("")
+		compare := fmt.Sprintf("%s", rv.Convert(typ))
+		return func(arg interface{}) bool {
+			return fmt.Sprintf("%s", reflect.ValueOf(arg).Convert(typ)) < compare
+		}
+	}
+}
+
+// LessThanEquals (val) returns a func(interface{}) bool that returns true if the func arg <= val.
+// The arg is converted to the type of val first, then compared.
+// Panics if val is nil or IsLessableKind(kind of val) is false.
+func LessThanEquals(val interface{}) func(interface{}) bool {
+	if IsNil(val) {
+		panic(lessThanErrorMsg)
+	}
+
+	rv := reflect.ValueOf(val)
+	if !IsLessableKind(rv.Kind()) {
+		panic(lessThanErrorMsg)
+	}
+
+	switch rv.Kind() {
+	case reflect.Int:
+		fallthrough
+	case reflect.Int8:
+		fallthrough
+	case reflect.Int16:
+		fallthrough
+	case reflect.Int32:
+		fallthrough
+	case reflect.Int64:
+		typ := reflect.TypeOf(int64(0))
+		compare := rv.Convert(typ).Int()
+		return func(arg interface{}) bool {
+			return reflect.ValueOf(arg).Convert(typ).Int() <= compare
+		}
+
+	case reflect.Uint:
+		fallthrough
+	case reflect.Uint8:
+		fallthrough
+	case reflect.Uint16:
+		fallthrough
+	case reflect.Uint32:
+		fallthrough
+	case reflect.Uint64:
+		typ := reflect.TypeOf(uint64(0))
+		compare := rv.Convert(typ).Uint()
+		return func(arg interface{}) bool {
+			return reflect.ValueOf(arg).Convert(typ).Uint() <= compare
+		}
+
+	case reflect.Float32:
+		fallthrough
+	case reflect.Float64:
+		typ := reflect.TypeOf(float64(0.0))
+		compare := rv.Convert(typ).Float()
+		return func(arg interface{}) bool {
+			return reflect.ValueOf(arg).Convert(typ).Float() <= compare
+		}
+
+	// Must be string
+	default:
+		typ := reflect.TypeOf("")
+		compare := fmt.Sprintf("%s", rv.Convert(typ))
+		return func(arg interface{}) bool {
+			return fmt.Sprintf("%s", reflect.ValueOf(arg).Convert(typ)) <= compare
+		}
+	}
+}
+
+// GreaterThan (val) returns a func(interface{}) bool that returns true if the func arg > val.
+// The arg is converted to the type of val first, then compared.
+// Panics if val is nil or IsLessableKind(kind of val) is false.
+func GreaterThan(val interface{}) func(interface{}) bool {
+	return Not(LessThanEquals(val))
+}
+
+// GreaterThanEquals (val) returns a func(interface{}) bool that returns true if the func arg >= val.
+// The arg is converted to the type of val first, then compared.
+// Panics if val is nil or IsLessableKind(kind of val) is false.
+func GreaterThanEquals(val interface{}) func(interface{}) bool {
+	return Not(LessThan(val))
+}
+
+// IsNegative (val) returns true if the val < 0
+func IsNegative(val interface{}) bool {
+	return LessThan(0)(val)
+}
+
+// IsNonNegative (val) returns true if val >= 0
+func IsNonNegative(val interface{}) bool {
+	return GreaterThanEquals(0)(val)
+}
+
+// IsPositive (val) returns true if val > 0
+func IsPositive(val interface{}) bool {
+	return GreaterThan(0)(val)
 }
 
 // IsNil is a func(interface{}) bool that returns true if val is nil
@@ -525,17 +687,33 @@ func TernaryOf(expr bool, trueVal, falseVal interface{}) interface{} {
 	return Supplier(falseVal)()
 }
 
-// PanicOnError panics if err is non-nil
-func PanicOnError(err error) {
+// PanicE panics if err is non-nil
+func PanicE(err error) {
 	if err != nil {
-		panic(err)
+		panic(err.Error())
 	}
 }
 
-// PanicOnError2 panics if err is non-nil, otherwise returns value
-func PanicOnError2(val interface{}, err error) interface{} {
+// PanicVE panics if err is non-nil, otherwise returns val
+func PanicVE(val interface{}, err error) interface{} {
 	if err != nil {
-		panic(err)
+		panic(err.Error())
+	}
+
+	return val
+}
+
+// PanicBM panics with msg if valid is false
+func PanicBM(valid bool, msg string) {
+	if !valid {
+		panic(msg)
+	}
+}
+
+// PanicVBM panics with msg if valid is false, else returns val
+func PanicVBM(val interface{}, valid bool, msg string) interface{} {
+	if !valid {
+		panic(msg)
 	}
 
 	return val
