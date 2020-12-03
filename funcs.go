@@ -788,3 +788,18 @@ func SortFunc(fn interface{}) func(val1, val2 interface{}) bool {
 		})[0].Bool()
 	}
 }
+
+// IntSortFunc returns true if val1.(int) < val2.(int)
+func IntSortFunc(val1, val2 interface{}) bool {
+	return val1.(int) < val2.(int)
+}
+
+// UintSortFunc returns true if val1.(uint) < val2.(uint)
+func UintSortFunc(val1, val2 interface{}) bool {
+	return val1.(uint) < val2.(uint)
+}
+
+// FloatSortFunc returns true if val1.(float64) < val2.(float64)
+func FloatSortFunc(val1, val2 interface{}) bool {
+	return val1.(float64) < val2.(float64)
+}

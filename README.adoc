@@ -45,6 +45,9 @@ Adapters panic if the function argument does not match expectations.
 * PanicBM(bool, msg) panics if the bool is false with msg
 * PanicVBM(val, bool, msg) panics if the bool is false with msg, else returns val
 * SortFunc(func(val21, val2) bool) adapts a func that returns true if val1 < val2 and adapts it to a func(interface{}, interface{}) bool
+* IntSortFunc returns true if val1.(int) < val2.(int)
+* UintSortFunc returns true if val1.(uint) < val2.(uint)
+* FloatSortFunc returns true if val1.(float64) < val2.(float64)
 
 == Examples
 

@@ -647,4 +647,16 @@ func TestSortFunc(t *testing.T) {
 	sf := SortFunc(func(val1, val2 int) bool { return val1 < val2 })
 	assert.True(t, sf(1, 2))
 	assert.False(t, sf(2, 1))
+
+	sf = IntSortFunc
+	assert.True(t, sf(1, 2))
+	assert.False(t, sf(2, 1))
+
+	sf = UintSortFunc
+	assert.True(t, sf(uint(1), uint(2)))
+	assert.False(t, sf(uint(2), uint(1)))
+
+	sf = FloatSortFunc
+	assert.True(t, sf(1.0, 2.0))
+	assert.False(t, sf(2.0, 1.0))
 }
