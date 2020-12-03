@@ -659,4 +659,8 @@ func TestSortFunc(t *testing.T) {
 	sf = FloatSortFunc
 	assert.True(t, sf(1.0, 2.0))
 	assert.False(t, sf(2.0, 1.0))
+
+	sf = StringSortFunc
+	assert.True(t, sf("a", "b"))
+	assert.False(t, sf("b", "a"))
 }

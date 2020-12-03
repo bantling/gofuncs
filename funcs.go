@@ -803,3 +803,8 @@ func UintSortFunc(val1, val2 interface{}) bool {
 func FloatSortFunc(val1, val2 interface{}) bool {
 	return val1.(float64) < val2.(float64)
 }
+
+// StringSortFunc returns true if val1.(string) < val2.(string)
+func StringSortFunc(val1, val2 interface{}) bool {
+	return val1.(string) < val2.(string)
+}
