@@ -169,22 +169,22 @@ func TestFilter(t *testing.T) {
 	assert.False(t, filterFn2(5))
 
 	// LessThan
-	filterFn = LessThan(5)
+	filterFn = IsLessThan(5)
 	assert.True(t, filterFn(int8(3)))
 	assert.False(t, filterFn(5))
 
 	// LessThanEquals
-	filterFn = LessThanEquals(5)
+	filterFn = IsLessThanEquals(5)
 	assert.True(t, filterFn(int8(5)))
 	assert.False(t, filterFn(6))
 
 	// GreaterThan
-	filterFn = GreaterThan(5)
+	filterFn = IsGreaterThan(5)
 	assert.True(t, filterFn(int8(6)))
 	assert.False(t, filterFn(5))
 
 	// GreaterThanEquals
-	filterFn = GreaterThanEquals(5)
+	filterFn = IsGreaterThanEquals(5)
 	assert.True(t, filterFn(int8(5)))
 	assert.False(t, filterFn(4))
 
@@ -641,4 +641,10 @@ func TestPanic(t *testing.T) {
 		PanicVBM(f, ok, "must be float64")
 		assert.Fail(t, "Float64 must fail")
 	}()
+}
+
+func TestSortFunc(t *testing.T) {
+	sf := SortFunc(func(val1, val2 int) bool { return val1 < val2 })
+	assert.True(t, sf(1, 2))
+	assert.False(t, sf(2, 1))
 }

@@ -20,10 +20,14 @@ Adapters panic if the function argument does not match expectations.
 * EqualTo accepts a value and returns a func(interface{}) bool that returns true if the func arg is equal to the value using ==
 * DeepEqualTo accepts a value and returns a func(interface{}) bool that returns true if the func arg is equal to the value using reflect.DeepEqual
 * IsLessableKind returns true if the given reflect.Kind is any type that compared using the < operator
-* LessThan accepts a value and returns a func(interface{}) bool that returns true if the func arg < the value
-* LessThanEquals accepts a value and returns a func(interface{}) bool that returns true if the func arg <= the value
-* GreaterThan accepts a value and returns a func(interface{}) bool that returns true if the func arg > the value
-* GreaterThanEquals accepts a value and returns a func(interface{}) bool that returns true if the func arg >= the value
+* LessThan accepts a value and returns a func(val1, val2 interface{}) bool that returns true if val1 < val2
+* IsLessThan accepts a value and returns a func(interface{}} bool that returns true if the func arg < the value
+* LessThanEquals accepts a value and returns a func(val1, val2 interface{}) bool that returns true if val1 <= val2
+* IsLessThanEquals accepts a value and returns a func(val1, val2 interface{}) bool that returns true if val1 <= val2
+* GreaterThan accepts a value and returns a func(val1, val2 interface{}) bool that returns true if val1 > val2
+* IsGreaterThan accepts a value and returns a func(interface{}) bool that returns true if the func arg > the value
+* GreaterThanEquals accepts a value and returns a func(val1, val2 interface{}) bool that returns true if val1 >= val2
+* IsGreaterThanEquals accepts a value and returns a func(interface{}) bool that returns true if the func arg >= the value
 * IsNegative accepts a value and returns true if it is negative
 * IsNonNegative accepts a value and returns true if it is non-negative
 * IsPositive accepts a value and returns true if it is positive
@@ -40,6 +44,7 @@ Adapters panic if the function argument does not match expectations.
 * PanicVE(val, error) panics if the error is non-nil with the wrapped message, else returns val
 * PanicBM(bool, msg) panics if the bool is false with msg
 * PanicVBM(val, bool, msg) panics if the bool is false with msg, else returns val
+* SortFunc(func(val21, val2) bool) adapts a func that returns true if val1 < val2 and adapts it to a func(interface{}, interface{}) bool
 
 == Examples
 
