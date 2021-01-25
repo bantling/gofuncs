@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: Apache-2.0
+
 reviveConfigFile = revive.toml
 reviveTestConfigFile = revive_test.toml
 
